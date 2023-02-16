@@ -88,4 +88,12 @@ Occupied_Beds_Average_Daily_Census.dropna().display()
 
 # COMMAND ----------
 
+df1 = spark.read.format("csv").option("header", "true").load("dbfs:/FileStore/shared_uploads/ranjitapatil09@gmail.com/hospital.csv")
+df1.printSchema()
+
+# COMMAND ----------
+
+df1.drop("FAC_NO","FAC_NAME","YEAR_QTR","BEG_DATE","END_DATE","OP_STATUS","PHONE","ADDRESS","CITY","ZIP_CODE","CEO","TYPE_CNTRL","TYPE_HOSP","TEACH_RURL") \
+    .printSchema()
+df1.display()
 
