@@ -6,8 +6,6 @@ from pyspark.sql.types import StructField,IntegerType, StructType,StringType
 df = spark.read.csv("/FileStore/tables/hospital_quarterly_financial_utilization_report_sum_of_four_quarters_9__1_.csv",header=True, inferSchema=True)
 df.display()
 
-# COMMAND ----------
-
 df1=df.select("DIS_MCAR","DIS_MCAR_MC","DIS_MCAL","DIS_MCAL_MC","DIS_CNTY","DIS_CNTY_MC","DIS_THRD","DIS_THRD_MC","DIS_INDGNT","DIS_OTH","DIS_TOT","DAY_MCAR",
               "DAY_MCAR_MC","DAY_MCAL","DAY_MCAL_MC","DAY_CNTY","DAY_CNTY_MC","DAY_THRD","DAY_THRD_MC","DAY_INDGNT","DAY_OTH","DAY_TOT","DAY_LTC","DIS_LTC","LIC_BEDS","AVL_BEDS","STF_BEDS")
 df1.dropna().display()
