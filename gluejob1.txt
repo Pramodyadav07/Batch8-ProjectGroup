@@ -1,0 +1,45 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.getOrCreate()
+from pyspark.sql.types import IntegerType,BooleanType,DateType
+from pyspark.sql.functions import col
+from pyspark.sql.functions import regexp_replace
+
+
+def main():
+    ## @params: [JOB_NAME]
+    args = getResolvedOptions(sys.argv, ["VAL1","VAL2"])
+    file_name=args['VAL1']
+    bucket_name=args['VAL2']
+    print("Bucket Name" , bucket_name)
+    print("File Name" , file_name)
+    
+    input_file_path="s3://{}/{}".format(bucket_name,file_name)
+    print("Input File Path : ",input_file_path)
+    
+    dfn = spark.read.csv(input_file_path,header=True,inferSchema=True)
+    
+    df=dfn.drop("FAC_NO","FAC_NAME","YEAR_QTR","BEG_DATE","END_DATE","OP_STATUS","PHONE","ADDRESS","CITY","ZIP_CODE","CEO","TYPE_CNTRL","TYPE_HOSP","TEACH_RURL")
+    df1=df.withColumn("GRIP_TOT", regexp_replace("GRIP_TOT", ",",""))\
+          .withColumn("GROP_TOT", regexp_replace("GROP_TOT", ",",""))\
+          .withColumn("NET_TOT", regexp_replace("NET_TOT", ",",""))\
+          .withColumn("VIS_TOT", regexp_replace("VIS_TOT", ",",""))\
+          .withColumn("DIS_TOT", regexp_replace("DIS_TOT", ",",""))\
+          .withColumn("VIS_OTH", regexp_replace("VIS_OTH", ",",""))\
+          .withColumn("DAY_TOT", regexp_replace("DAY_TOT", ",",""))\
+          .withColumn("OTH_OP_REV", regexp_replace("OTH_OP_REV", ",",""))\
+          .withColumn("TOT_OP_EXP", regexp_replace("TOT_OP_EXP", ",",""))\
+          .withColumn("NONOP_REV",regexp_replace("NONOP_REV",",",""))\
+          .withColumn("GROS_INPAT_REV_CC", regexp_replace("GROS_INPAT_REV_CC", ",",""))\
+          .withColumn("GROS_OUTPAT_REV_CC", regexp_replace("GROS_OUTPAT_REV_CC", ",",""))
+          
+    df1.write.format("csv").option("header", "true").save("s3a://cleanbucket-01/hospital")
+
+main()

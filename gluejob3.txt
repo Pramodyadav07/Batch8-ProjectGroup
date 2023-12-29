@@ -1,0 +1,42 @@
+import sys
+from awsglue.transforms import *
+from awsglue.context import GlueContext
+from pyspark.context import SparkContext
+from awsglue.utils import getResolvedOptions
+from awsglue.job import Job
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+from pyspark.sql.window import *
+import pg8000 as pg
+
+args = getResolvedOptions(sys.argv, ["val1","val2"])
+
+#args=getResolvedOptions(sys.argv,['TempDir','JOB_NAME'])
+
+sc=SparkContext()
+glueContext=GlueContext(sc)
+spark=glueContext.spark_session
+job=Job(glueContext)
+#job.init(args['JOB_NAME'],args)
+filename = args['val1']
+bucketname = args['val2']
+
+def redshift_connection(cmd):
+    try:
+        con=pg.connect(database='dev',
+					   user='awsuser',
+					   password='Project-004',
+					   host='redshift-cluster-1.ckfzkodplu4f.us-east-1.redshift.amazonaws.com:5439/dev',
+					   port=5439)
+        print('Connection build SuccessFully')
+        cur=con.cursor()
+        cur.execute(cmd)
+        con.commit()
+        con.close()
+        print('Data Uploaded to RedShift SuccessFully')
+    except Exception as e:
+        print("Exception Occurred due to",e)
+        
+       
+cmd= f"copy public.hospital from 's3://{bucketname}/{filename}' iam_role 'arn:aws:iam::085922923795:role/redshift-role1' FORMAT AS CSV;"        
+redshift_connection(cmd)

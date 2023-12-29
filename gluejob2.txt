@@ -1,0 +1,34 @@
+import sys
+from awsglue.transforms import *
+from awsglue.utils import getResolvedOptions
+from pyspark.context import SparkContext
+from awsglue.context import GlueContext
+from awsglue.job import Job
+from pyspark.sql.functions import *
+from pyspark.sql.types import *
+from pyspark.sql import SparkSession
+spark = SparkSession.builder.getOrCreate()
+from pyspark.sql.types import IntegerType,BooleanType,DateType
+from pyspark.sql.functions import col
+from pyspark.sql.functions import regexp_replace
+
+def main():
+    ## @params: [JOB_NAME]
+    args = getResolvedOptions(sys.argv, ["VAL1","VAL2"])
+    file_name=args['VAL1']
+    bucket_name=args['VAL2']
+    print("Bucket Name" , bucket_name)
+    print("File Name" , file_name)
+    input_file_path="s3://{}/{}".format(bucket_name,file_name)
+    print("Input File Path : ",input_file_path)
+
+    df2 = spark.read.csv(input_file_path,header=True,inferSchema=True)
+    df3=df2.withColumn("NET_OUT_REV", (df2.GROP_TOT/(df2.GROP_TOT+df2.GRIP_TOT)*df2.NET_TOT))
+    df4=df3.withColumn("NET_OUT_REV_V", (df3.NET_OUT_REV/df3.VIS_TOT)).withColumn("NET_OUT_REV_P", (df3.NET_OUT_REV/df3.VIS_OTH))
+    df5=df4.select("*",round("NET_OUT_REV",2),round("NET_OUT_REV_V",2),round("NET_OUT_REV_P",2))
+    df6=df5.withColumn("Gross_Inpatient_Revenue_Per_Discharge", (df2.GRIP_TOT)/(df2.DIS_TOT)).withColumn("Gross_Inpatient_Revenue_Per_Day", (df2.GRIP_TOT)/(df2.DAY_TOT))
+    df7=df6.select("*",round("Gross_Inpatient_Revenue_Per_Discharge",2),round("Gross_Inpatient_Revenue_Per_Day",2))
+
+    df7.write.format("csv").option("header", "true").save("s3a://end-buck/final")
+
+main()
